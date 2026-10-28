@@ -1,5 +1,9 @@
 package ro.bogdandragomir.paperboy.search
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
@@ -7,10 +11,8 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -41,7 +43,6 @@ sealed interface SearchResults {
 }
 
 data class SearchUiState(
-    val query: String = "",
     val results: SearchResults = SearchResults.Idle,
     val recentSearches: List<String> = emptyList(),
     val savedIds: Set<String> = emptySet(),
@@ -54,10 +55,15 @@ class SearchViewModel(
     private val recentSearches: RecentSearchesRepository,
     private val recentStories: RecentStories,
 ) : ViewModel() {
-    private val query = MutableStateFlow("")
+    /**
+     * What the reader typed. Compose state, not a Flow: the text field must read back every keystroke
+     * immediately, or fast typing drops letters.
+     */
+    var query by mutableStateOf("")
+        private set
 
     private val results: Flow<SearchResults> =
-        query
+        snapshotFlow { query }
             .map { it.trim() }
             .distinctUntilChanged()
             // Wait for a short pause in typing instead of searching on every key press.
@@ -65,22 +71,17 @@ class SearchViewModel(
             .flatMapLatest { text -> if (text.isEmpty()) flowOf(SearchResults.Idle) else search(text) }
 
     val uiState: StateFlow<SearchUiState> =
-        combine(
-            query.asStateFlow(),
-            results,
-            recentSearches.recent,
-            saved.observeSavedIds(),
-        ) { text, found, recent, savedIds ->
-            SearchUiState(query = text, results = found, recentSearches = recent, savedIds = savedIds)
+        combine(results, recentSearches.recent, saved.observeSavedIds()) { found, recent, savedIds ->
+            SearchUiState(results = found, recentSearches = recent, savedIds = savedIds)
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SearchUiState())
 
     fun onQueryChange(text: String) {
-        query.value = text
+        query = text
     }
 
     /** The reader opened a result or pressed search: remember what they looked for. */
     fun rememberQuery() {
-        val text = query.value.trim()
+        val text = query.trim()
         if (text.isNotEmpty()) viewModelScope.launch { recentSearches.add(text) }
     }
 

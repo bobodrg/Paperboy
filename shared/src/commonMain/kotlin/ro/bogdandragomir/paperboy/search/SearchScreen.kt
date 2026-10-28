@@ -51,6 +51,7 @@ fun SearchRoute(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     SearchScreen(
+        query = viewModel.query,
         uiState = uiState,
         onQueryChange = viewModel::onQueryChange,
         onSubmit = viewModel::rememberQuery,
@@ -66,6 +67,7 @@ fun SearchRoute(
 @OptIn(ExperimentalTime::class)
 @Composable
 fun SearchScreen(
+    query: String,
     uiState: SearchUiState,
     onQueryChange: (String) -> Unit,
     onSubmit: () -> Unit,
@@ -82,12 +84,12 @@ fun SearchScreen(
         Column(Modifier.padding(start = 20.dp, end = 20.dp, top = 24.dp, bottom = 8.dp)) {
             Text("Search", style = MaterialTheme.typography.displaySmall)
             OutlinedTextField(
-                value = uiState.query,
+                value = query,
                 onValueChange = onQueryChange,
                 placeholder = { Text("Topics, headlines, sources…") },
                 leadingIcon = { Icon(PaperboyIcons.Search, contentDescription = null) },
                 trailingIcon = {
-                    if (uiState.query.isNotEmpty()) {
+                    if (query.isNotEmpty()) {
                         IconButton(
                             onClick = { onQueryChange("") },
                         ) { Icon(PaperboyIcons.Close, contentDescription = "Clear") }
@@ -117,9 +119,9 @@ fun SearchScreen(
                 if (results.stories.isEmpty()) {
                     Message(
                         if (results.offline) {
-                            "You're offline, and none of your saved stories match \"${uiState.query.trim()}\"."
+                            "You're offline, and none of your saved stories match \"${query.trim()}\"."
                         } else {
-                            "No stories from the last week match \"${uiState.query.trim()}\"."
+                            "No stories from the last week match \"${query.trim()}\"."
                         },
                     )
                 } else {
