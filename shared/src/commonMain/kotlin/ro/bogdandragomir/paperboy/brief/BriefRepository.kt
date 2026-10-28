@@ -1,64 +1,46 @@
 package ro.bogdandragomir.paperboy.brief
 
+import co.touchlab.kermit.Logger
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
-import ro.bogdandragomir.paperboy.core.model.Brief
-import ro.bogdandragomir.paperboy.core.model.Source
-import ro.bogdandragomir.paperboy.core.model.Story
+import ro.bogdandragomir.paperboy.data.local.BriefLocalDataSource
+import ro.bogdandragomir.paperboy.data.local.CachedBrief
+import ro.bogdandragomir.paperboy.data.remote.BriefApi
 
-interface BriefRepository {
-    /** Today's brief. Emits again whenever the local copy changes. */
-    fun observeTodayBrief(): Flow<Brief>
+/** The topics the reader follows. Replaced by the onboarding choices in the next step. */
+fun interface FollowedTopics {
+    suspend fun ids(): List<String>
 }
 
-/**
- * Placeholder until the backend and the local database exist (roadmap phases 2 and 4).
- * The stories are invented sample data.
- */
-class SampleBriefRepository : BriefRepository {
-    override fun observeTodayBrief(): Flow<Brief> = flowOf(sampleBrief)
+interface BriefRepository {
+    /** The brief stored on the device. This is what the UI shows, online or offline. */
+    fun observeBrief(): Flow<CachedBrief?>
+
+    /** Downloads a fresh brief and stores it. On failure the stored brief stays as it was. */
+    suspend fun refresh(): Result<Unit>
+}
+
+class OfflineFirstBriefRepository(
+    private val api: BriefApi,
+    private val local: BriefLocalDataSource,
+    private val followedTopics: FollowedTopics,
+    private val nowEpochMillis: () -> Long,
+) : BriefRepository {
+    override fun observeBrief(): Flow<CachedBrief?> = local.observe()
+
+    override suspend fun refresh(): Result<Unit> =
+        try {
+            val brief = api.brief(followedTopics.ids(), BRIEF_SIZE)
+            local.replace(brief, nowEpochMillis())
+            Result.success(Unit)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Logger.w(e) { "Brief refresh failed" }
+            Result.failure(e)
+        }
 
     private companion object {
-        val sampleSource = Source(id = "sample", name = "Sample Daily", homepageUrl = "https://example.com")
-
-        val sampleBrief =
-            Brief(
-                date = "2026-10-28",
-                stories =
-                    listOf(
-                        sampleStory(
-                            "1",
-                            "Your topics, ranked for this morning",
-                            "This is where today's most relevant story will appear, with a short summary from the publisher.",
-                        ),
-                        sampleStory(
-                            "2",
-                            "One story, several sources",
-                            "When many outlets cover the same event, Paperboy shows it once and tells you how many sources covered it.",
-                            sourceCount = 4,
-                        ),
-                        sampleStory(
-                            "3",
-                            "Five minutes, then you're done",
-                            "The brief is finite on purpose. Read it with your coffee and get on with your day.",
-                        ),
-                    ),
-            )
-
-        fun sampleStory(
-            id: String,
-            headline: String,
-            summary: String,
-            sourceCount: Int = 1,
-        ) = Story(
-            id = id,
-            headline = headline,
-            summary = summary,
-            url = "https://example.com/$id",
-            source = sampleSource,
-            topicIds = listOf("tech"),
-            publishedAtEpochMillis = 0,
-            sourceCount = sourceCount,
-        )
+        const val BRIEF_SIZE = 10
     }
 }
