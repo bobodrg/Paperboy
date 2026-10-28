@@ -49,6 +49,7 @@ kotlin {
             implementation(libs.coil.compose)
             implementation(libs.coil.network.ktor3)
             implementation(libs.kermit)
+            implementation(libs.datastore.preferences.core)
         }
         androidMain.dependencies {
             implementation(libs.ktor.client.okhttp)
