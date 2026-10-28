@@ -2,6 +2,7 @@ package ro.bogdandragomir.paperboy.data.local
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import ro.bogdandragomir.paperboy.core.model.Brief
 import ro.bogdandragomir.paperboy.core.model.Source
 import ro.bogdandragomir.paperboy.core.model.Story
@@ -16,6 +17,9 @@ interface BriefLocalDataSource {
     /** Emits null until a brief has been downloaded once. */
     fun observe(): Flow<CachedBrief?>
 
+    /** Emits null when the story isn't in the stored brief (e.g. after a refresh replaced it). */
+    fun observeStory(id: String): Flow<Story?>
+
     suspend fun replace(
         brief: Brief,
         fetchedAtEpochMillis: Long,
@@ -29,6 +33,8 @@ class RoomBriefLocalDataSource(
         combine(dao.observeStories(), dao.observeMeta()) { stories, meta ->
             meta?.let { CachedBrief(Brief(it.date, stories.map(StoryEntity::toStory)), it.fetchedAtEpochMillis) }
         }
+
+    override fun observeStory(id: String): Flow<Story?> = dao.observeStory(id).map { it?.toStory() }
 
     override suspend fun replace(
         brief: Brief,

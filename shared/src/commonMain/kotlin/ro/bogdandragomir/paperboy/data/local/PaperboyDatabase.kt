@@ -47,6 +47,9 @@ abstract class BriefDao {
     @Query("SELECT * FROM brief_stories ORDER BY position")
     abstract fun observeStories(): Flow<List<StoryEntity>>
 
+    @Query("SELECT * FROM brief_stories WHERE id = :id")
+    abstract fun observeStory(id: String): Flow<StoryEntity?>
+
     @Query("SELECT * FROM brief_meta WHERE id = 0")
     abstract fun observeMeta(): Flow<BriefMetaEntity?>
 
