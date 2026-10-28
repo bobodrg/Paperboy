@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:media="http://search.yahoo.com/mrss/">
+  <channel>
+    <title>Sample feed</title>
+    <link>https://example.com</link>
+    <description>Test fixture</description>
+    <item>
+      <title>Chip makers report record quarter</title>
+      <link>https://example.com/news/chips?utm_source=rss&amp;id=42#top</link>
+      <description><![CDATA[<p>Demand for <b>AI chips</b> kept growing.</p><img src="https://example.com/inline.jpg"/>]]></description>
+      <pubDate>Tue, 27 Oct 2026 08:00:00 GMT</pubDate>
+      <media:content url="https://example.com/chips.jpg" medium="image"/>
+    </item>
+    <item>
+      <title>Image only in the description</title>
+      <link>https://example.com/news/inline</link>
+      <description><![CDATA[<img src="https://example.com/inline.jpg"/> Short text.]]></description>
+      <pubDate>Tue, 27 Oct 2026 07:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>From the future</title>
+      <link>https://example.com/news/future</link>
+      <description>Dated next year.</description>
+      <pubDate>Wed, 27 Oct 2027 07:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title></title>
+      <link>https://example.com/news/no-title</link>
+    </item>
+  </channel>
+</rss>
