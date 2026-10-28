@@ -14,12 +14,12 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
-class KtorBriefApiTest {
+class KtorPaperboyApiTest {
     private fun api(
         status: HttpStatusCode,
         body: String,
         onRequest: (String) -> Unit = {},
-    ): KtorBriefApi {
+    ): KtorPaperboyApi {
         val engine =
             MockEngine { request ->
                 onRequest(request.url.toString())
@@ -30,7 +30,7 @@ class KtorBriefApiTest {
                 expectSuccess = true
                 install(ContentNegotiation) { json(Json { ignoreUnknownKeys = true }) }
             }
-        return KtorBriefApi(client, ApiConfig("https://api.example.com"))
+        return KtorPaperboyApi(client, ApiConfig("https://api.example.com"))
     }
 
     @Test
@@ -48,6 +48,18 @@ class KtorBriefApiTest {
 
             assertEquals("https://api.example.com/v1/brief?topics=tech%2Cai&limit=10", url)
             assertEquals("H", brief.stories.single().headline)
+        }
+
+    @Test
+    fun requestsTheTopics() =
+        runTest {
+            var url = ""
+            val json = """[{"id":"tech","name":"Tech","parentId":null},{"id":"ai","name":"AI","parentId":"tech"}]"""
+
+            val topics = api(HttpStatusCode.OK, json) { url = it }.topics()
+
+            assertEquals("https://api.example.com/v1/topics", url)
+            assertEquals("tech", topics[1].parentId)
         }
 
     @Test

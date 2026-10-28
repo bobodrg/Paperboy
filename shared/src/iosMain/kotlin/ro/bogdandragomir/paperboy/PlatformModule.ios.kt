@@ -7,8 +7,10 @@ import org.koin.dsl.module
 import platform.Foundation.NSDocumentDirectory
 import platform.Foundation.NSFileManager
 import platform.Foundation.NSUserDomainMask
+import ro.bogdandragomir.paperboy.data.local.PREFERENCES_FILE_NAME
 import ro.bogdandragomir.paperboy.data.local.PaperboyDatabase
 import ro.bogdandragomir.paperboy.data.local.buildPaperboyDatabase
+import ro.bogdandragomir.paperboy.data.local.createPreferencesDataStore
 import ro.bogdandragomir.paperboy.data.remote.ApiConfig
 
 actual val platformModule: Module =
@@ -18,6 +20,7 @@ actual val platformModule: Module =
                 .databaseBuilder<PaperboyDatabase>(name = "${documentDirectory()}/paperboy.db")
                 .buildPaperboyDatabase()
         }
+        single { createPreferencesDataStore("${documentDirectory()}/$PREFERENCES_FILE_NAME") }
         // The iOS simulator shares the Mac's network, so localhost is the Mac.
         single { ApiConfig(baseUrl = "http://localhost:8080") }
     }

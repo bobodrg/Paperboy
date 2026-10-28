@@ -13,27 +13,39 @@ class OfflineFirstBriefRepositoryTest {
     @Test
     fun refreshAsksForTheFollowedTopicsAndStoresTheResult() =
         runTest {
-            val api = FakeBriefApi { Brief("2026-10-28", listOf(story("new"))) }
+            val api = FakePaperboyApi(response = { Brief("2026-10-28", listOf(story("new"))) })
             val local = FakeBriefLocalDataSource(oldBrief)
-            val repository = OfflineFirstBriefRepository(api, local, { listOf("tech", "ai") }) { 42 }
+            val repository =
+                OfflineFirstBriefRepository(api, local, FakeInterestsRepository(setOf("tech", "ai"))) { 42 }
 
             val result = repository.refresh()
 
             assertTrue(result.isSuccess)
-            assertEquals(listOf(listOf("tech", "ai") to 10), api.requests)
+            assertEquals(listOf(listOf("ai", "tech") to 10), api.briefRequests)
             assertEquals(CachedBrief(Brief("2026-10-28", listOf(story("new"))), 42), local.stored.value)
         }
 
     @Test
     fun aFailedRefreshKeepsTheStoredBrief() =
         runTest {
-            val api = FakeBriefApi { error("offline") }
+            val api = FakePaperboyApi(response = { error("offline") })
             val local = FakeBriefLocalDataSource(oldBrief)
-            val repository = OfflineFirstBriefRepository(api, local, { listOf("tech") }) { 42 }
+            val repository = OfflineFirstBriefRepository(api, local, FakeInterestsRepository(setOf("tech"))) { 42 }
 
             val result = repository.refresh()
 
             assertTrue(result.isFailure)
             assertEquals(oldBrief, local.stored.value)
+        }
+
+    @Test
+    fun doesNotCallTheApiBeforeOnboarding() =
+        runTest {
+            val api = FakePaperboyApi()
+            val repository =
+                OfflineFirstBriefRepository(api, FakeBriefLocalDataSource(), FakeInterestsRepository()) { 42 }
+
+            assertTrue(repository.refresh().isFailure)
+            assertTrue(api.briefRequests.isEmpty())
         }
 }
