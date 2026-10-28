@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
@@ -23,6 +24,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -41,9 +43,12 @@ import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 @Composable
-fun BriefRoute(viewModel: BriefViewModel = koinViewModel()) {
+fun BriefRoute(
+    onEditTopics: () -> Unit,
+    viewModel: BriefViewModel = koinViewModel(),
+) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    BriefScreen(uiState, onRefresh = viewModel::refresh)
+    BriefScreen(uiState, onRefresh = viewModel::refresh, onEditTopics = onEditTopics)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -51,6 +56,7 @@ fun BriefRoute(viewModel: BriefViewModel = koinViewModel()) {
 fun BriefScreen(
     uiState: BriefUiState,
     onRefresh: () -> Unit,
+    onEditTopics: () -> Unit,
 ) {
     Box(
         modifier =
@@ -63,7 +69,7 @@ fun BriefScreen(
             BriefUiState.Error -> ErrorState(onRetry = onRefresh, modifier = Modifier.align(Alignment.Center))
             is BriefUiState.Ready ->
                 PullToRefreshBox(isRefreshing = uiState.isRefreshing, onRefresh = onRefresh) {
-                    BriefList(uiState)
+                    BriefList(uiState, onEditTopics)
                 }
         }
     }
@@ -71,7 +77,10 @@ fun BriefScreen(
 
 @OptIn(ExperimentalTime::class)
 @Composable
-private fun BriefList(state: BriefUiState.Ready) {
+private fun BriefList(
+    state: BriefUiState.Ready,
+    onEditTopics: () -> Unit,
+) {
     val now = Clock.System.now().toEpochMilliseconds()
     LazyColumn(
         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 24.dp),
@@ -79,7 +88,15 @@ private fun BriefList(state: BriefUiState.Ready) {
         modifier = Modifier.fillMaxSize(),
     ) {
         item {
-            Text("Paperboy", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "Paperboy",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.weight(1f),
+                )
+                TextButton(onClick = onEditTopics) { Text("Topics") }
+            }
             Text("Your morning edition", style = MaterialTheme.typography.displaySmall)
             if (state.isStale) {
                 Spacer(Modifier.height(8.dp))
