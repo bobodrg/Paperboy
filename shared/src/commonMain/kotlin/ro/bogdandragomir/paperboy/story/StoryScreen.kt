@@ -3,6 +3,8 @@ package ro.bogdandragomir.paperboy.story
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
@@ -30,8 +32,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
-import ro.bogdandragomir.paperboy.brief.formatAge
 import ro.bogdandragomir.paperboy.core.model.Story
+import ro.bogdandragomir.paperboy.designsystem.SaveButton
+import ro.bogdandragomir.paperboy.designsystem.formatAge
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
@@ -42,13 +45,19 @@ fun StoryRoute(
     viewModel: StoryViewModel = koinViewModel(key = storyId) { parametersOf(storyId) },
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    StoryScreen(uiState, onBack = onBack, onReadArticle = rememberArticleBrowser())
+    StoryScreen(
+        uiState,
+        onBack = onBack,
+        onToggleSave = viewModel::toggleSave,
+        onReadArticle = rememberArticleBrowser(),
+    )
 }
 
 @Composable
 fun StoryScreen(
     uiState: StoryUiState,
     onBack: () -> Unit,
+    onToggleSave: () -> Unit,
     onReadArticle: (url: String) -> Unit,
 ) {
     Column(
@@ -57,7 +66,14 @@ fun StoryScreen(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.safeDrawing),
     ) {
-        TextButton(onClick = onBack, modifier = Modifier.padding(start = 8.dp, top = 8.dp)) { Text("← Your brief") }
+        Row(
+            Modifier.fillMaxWidth().padding(start = 8.dp, end = 8.dp, top = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            TextButton(onClick = onBack) { Text("← Back") }
+            Spacer(Modifier.weight(1f))
+            if (uiState is StoryUiState.Ready) SaveButton(isSaved = uiState.isSaved, onToggle = onToggleSave)
+        }
         Box(Modifier.weight(1f).fillMaxWidth()) {
             when (uiState) {
                 StoryUiState.Loading -> CircularProgressIndicator(Modifier.align(Alignment.Center))

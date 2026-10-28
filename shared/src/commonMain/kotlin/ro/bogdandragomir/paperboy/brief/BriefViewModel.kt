@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import ro.bogdandragomir.paperboy.core.model.Story
 import ro.bogdandragomir.paperboy.data.local.InterestsRepository
+import ro.bogdandragomir.paperboy.data.local.SavedRepository
 
 sealed interface BriefUiState {
     /** Nothing stored yet and the first download is running. */
@@ -38,7 +39,17 @@ private data class RefreshStatus(
 class BriefViewModel(
     private val repository: BriefRepository,
     interests: InterestsRepository,
+    private val saved: SavedRepository,
 ) : ViewModel() {
+    val savedIds: StateFlow<Set<String>> =
+        saved.observeSavedIds().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptySet())
+
+    fun toggleSave(story: Story) {
+        viewModelScope.launch {
+            if (story.id in savedIds.value) saved.remove(story.id) else saved.save(story)
+        }
+    }
+
     private val refreshStatus = MutableStateFlow(RefreshStatus())
     private var refreshJob: Job? = null
 

@@ -29,6 +29,8 @@ import ro.bogdandragomir.paperboy.data.local.DataStoreInterestsRepository
 import ro.bogdandragomir.paperboy.data.local.InterestsRepository
 import ro.bogdandragomir.paperboy.data.local.PaperboyDatabase
 import ro.bogdandragomir.paperboy.data.local.RoomBriefLocalDataSource
+import ro.bogdandragomir.paperboy.data.local.RoomSavedRepository
+import ro.bogdandragomir.paperboy.data.local.SavedRepository
 import ro.bogdandragomir.paperboy.data.remote.KtorPaperboyApi
 import ro.bogdandragomir.paperboy.data.remote.PaperboyApi
 import ro.bogdandragomir.paperboy.data.remote.createHttpClient
@@ -36,6 +38,9 @@ import ro.bogdandragomir.paperboy.designsystem.PaperboyTheme
 import ro.bogdandragomir.paperboy.navigation.PaperboyNavHost
 import ro.bogdandragomir.paperboy.onboarding.OnboardingRoute
 import ro.bogdandragomir.paperboy.onboarding.OnboardingViewModel
+import ro.bogdandragomir.paperboy.saved.SavedViewModel
+import ro.bogdandragomir.paperboy.story.RecentStories
+import ro.bogdandragomir.paperboy.story.StoryLookup
 import ro.bogdandragomir.paperboy.story.StoryViewModel
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
@@ -56,8 +61,13 @@ val appModule =
         }
         viewModelOf(::RootViewModel)
         viewModelOf(::BriefViewModel)
+        single { get<PaperboyDatabase>().savedStoryDao() }
+        single<SavedRepository> { RoomSavedRepository(get()) { Clock.System.now().toEpochMilliseconds() } }
+        single { RecentStories() }
+        single { StoryLookup(get(), get(), get()) }
         viewModelOf(::OnboardingViewModel)
-        viewModel { (storyId: String) -> StoryViewModel(storyId, get()) }
+        viewModelOf(::SavedViewModel)
+        viewModel { (storyId: String) -> StoryViewModel(storyId, get(), get()) }
     }
 
 /** Starts dependency injection. Called once from each platform's entry point. */

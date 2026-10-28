@@ -29,6 +29,7 @@ import kotlinx.serialization.Serializable
 import ro.bogdandragomir.paperboy.brief.BriefRoute
 import ro.bogdandragomir.paperboy.designsystem.PaperboyIcons
 import ro.bogdandragomir.paperboy.onboarding.OnboardingRoute
+import ro.bogdandragomir.paperboy.saved.SavedRoute
 import ro.bogdandragomir.paperboy.story.StoryRoute
 import kotlin.reflect.KClass
 
@@ -107,7 +108,7 @@ fun PaperboyNavHost() {
                 )
             }
             composable<SearchDestination> { ComingSoon("Search") }
-            composable<SavedDestination> { ComingSoon("Saved") }
+            composable<SavedDestination> { SavedRoute(onOpenStory = { navController.navigate(StoryDestination(it)) }) }
             composable<ProfileDestination> { ComingSoon("Profile") }
             composable<StoryDestination> { entry ->
                 StoryRoute(
