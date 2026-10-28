@@ -6,10 +6,6 @@ import androidx.compose.runtime.getValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
-import androidx.navigation.toRoute
 import coil3.ImageLoader
 import coil3.compose.setSingletonImageLoaderFactory
 import coil3.network.ktor3.KtorNetworkFetcherFactory
@@ -17,7 +13,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.serialization.Serializable
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.KoinApplication
 import org.koin.core.context.startKoin
@@ -27,7 +22,6 @@ import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.KoinAppDeclaration
 import org.koin.dsl.module
 import ro.bogdandragomir.paperboy.brief.BriefRepository
-import ro.bogdandragomir.paperboy.brief.BriefRoute
 import ro.bogdandragomir.paperboy.brief.BriefViewModel
 import ro.bogdandragomir.paperboy.brief.OfflineFirstBriefRepository
 import ro.bogdandragomir.paperboy.data.local.BriefLocalDataSource
@@ -39,9 +33,9 @@ import ro.bogdandragomir.paperboy.data.remote.KtorPaperboyApi
 import ro.bogdandragomir.paperboy.data.remote.PaperboyApi
 import ro.bogdandragomir.paperboy.data.remote.createHttpClient
 import ro.bogdandragomir.paperboy.designsystem.PaperboyTheme
+import ro.bogdandragomir.paperboy.navigation.PaperboyNavHost
 import ro.bogdandragomir.paperboy.onboarding.OnboardingRoute
 import ro.bogdandragomir.paperboy.onboarding.OnboardingViewModel
-import ro.bogdandragomir.paperboy.story.StoryRoute
 import ro.bogdandragomir.paperboy.story.StoryViewModel
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
@@ -107,35 +101,5 @@ private fun Root(viewModel: RootViewModel = koinViewModel()) {
         RootState.Loading -> Unit
         RootState.NeedsOnboarding -> OnboardingRoute(isEditing = false, onDone = {})
         RootState.Ready -> PaperboyNavHost()
-    }
-}
-
-@Serializable
-private object BriefDestination
-
-@Serializable
-private data class StoryDestination(
-    val storyId: String,
-)
-
-@Serializable
-private object TopicsDestination
-
-@Composable
-private fun PaperboyNavHost() {
-    val navController = rememberNavController()
-    NavHost(navController, startDestination = BriefDestination) {
-        composable<BriefDestination> {
-            BriefRoute(
-                onEditTopics = { navController.navigate(TopicsDestination) },
-                onOpenStory = { navController.navigate(StoryDestination(it)) },
-            )
-        }
-        composable<StoryDestination> { entry ->
-            StoryRoute(storyId = entry.toRoute<StoryDestination>().storyId, onBack = { navController.popBackStack() })
-        }
-        composable<TopicsDestination> {
-            OnboardingRoute(isEditing = true, onDone = { navController.popBackStack() })
-        }
     }
 }
