@@ -29,6 +29,7 @@ import kotlinx.serialization.Serializable
 import ro.bogdandragomir.paperboy.brief.BriefRoute
 import ro.bogdandragomir.paperboy.designsystem.PaperboyIcons
 import ro.bogdandragomir.paperboy.onboarding.OnboardingRoute
+import ro.bogdandragomir.paperboy.profile.ProfileRoute
 import ro.bogdandragomir.paperboy.saved.SavedRoute
 import ro.bogdandragomir.paperboy.story.StoryRoute
 import kotlin.reflect.KClass
@@ -102,14 +103,16 @@ fun PaperboyNavHost() {
             modifier = Modifier.padding(bottom = padding.calculateBottomPadding()),
         ) {
             composable<TodayDestination> {
-                BriefRoute(
-                    onEditTopics = { navController.navigate(TopicsDestination) },
-                    onOpenStory = { navController.navigate(StoryDestination(it)) },
-                )
+                BriefRoute(onOpenStory = { navController.navigate(StoryDestination(it)) })
             }
             composable<SearchDestination> { ComingSoon("Search") }
             composable<SavedDestination> { SavedRoute(onOpenStory = { navController.navigate(StoryDestination(it)) }) }
-            composable<ProfileDestination> { ComingSoon("Profile") }
+            composable<ProfileDestination> {
+                ProfileRoute(
+                    onEditTopics = { navController.navigate(TopicsDestination) },
+                    onOpenSaved = { navController.navigateToTab(SavedDestination) },
+                )
+            }
             composable<StoryDestination> { entry ->
                 StoryRoute(
                     storyId = entry.toRoute<StoryDestination>().storyId,

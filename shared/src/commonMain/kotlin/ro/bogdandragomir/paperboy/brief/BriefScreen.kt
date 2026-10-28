@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -22,7 +21,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -40,7 +38,6 @@ import kotlin.time.ExperimentalTime
 
 @Composable
 fun BriefRoute(
-    onEditTopics: () -> Unit,
     onOpenStory: (storyId: String) -> Unit,
     viewModel: BriefViewModel = koinViewModel(),
 ) {
@@ -50,7 +47,6 @@ fun BriefRoute(
         uiState = uiState,
         savedIds = savedIds,
         onRefresh = viewModel::refresh,
-        onEditTopics = onEditTopics,
         onOpenStory = onOpenStory,
         onToggleSave = viewModel::toggleSave,
     )
@@ -62,7 +58,6 @@ fun BriefScreen(
     uiState: BriefUiState,
     savedIds: Set<String>,
     onRefresh: () -> Unit,
-    onEditTopics: () -> Unit,
     onOpenStory: (storyId: String) -> Unit,
     onToggleSave: (Story) -> Unit,
 ) {
@@ -79,7 +74,7 @@ fun BriefScreen(
             BriefUiState.Error -> ErrorState(onRetry = onRefresh, modifier = Modifier.align(Alignment.Center))
             is BriefUiState.Ready ->
                 PullToRefreshBox(isRefreshing = uiState.isRefreshing, onRefresh = onRefresh) {
-                    BriefList(uiState, savedIds, onEditTopics, onOpenStory, onToggleSave)
+                    BriefList(uiState, savedIds, onOpenStory, onToggleSave)
                 }
         }
     }
@@ -90,7 +85,6 @@ fun BriefScreen(
 private fun BriefList(
     state: BriefUiState.Ready,
     savedIds: Set<String>,
-    onEditTopics: () -> Unit,
     onOpenStory: (storyId: String) -> Unit,
     onToggleSave: (Story) -> Unit,
 ) {
@@ -101,15 +95,7 @@ private fun BriefList(
         modifier = Modifier.fillMaxSize(),
     ) {
         item {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = "Paperboy",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.weight(1f),
-                )
-                TextButton(onClick = onEditTopics) { Text("Topics") }
-            }
+            Text("Paperboy", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
             Text("Your morning edition", style = MaterialTheme.typography.displaySmall)
             if (state.isStale) {
                 Spacer(Modifier.height(8.dp))
