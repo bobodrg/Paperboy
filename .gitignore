@@ -1,0 +1,39 @@
+# Gradle / Kotlin
+.gradle/
+.kotlin/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+local.properties
+
+# IDE
+.idea/
+*.iml
+.fleet/
+.vscode/
+
+# Android
+captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+*.aab
+*.keystore
+*.jks
+google-services.json
+
+# iOS / Xcode
+iosApp/*.xcodeproj/
+xcuserdata/
+DerivedData/
+*.xcworkspace/xcuserdata/
+GoogleService-Info.plist
+Pods/
+
+# Secrets and env
+.env
+.env.*
+!.env.example
+secrets.properties
+
+# macOS
+.DS_Store
