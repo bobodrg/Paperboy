@@ -44,6 +44,14 @@ curl 'http://localhost:8080/v1/brief?topics=tech,ai&limit=10'
 | `GET /v1/topics` | Topics a reader can follow |
 | `GET /v1/brief?topics=tech,ai&limit=10` | Today's ranked brief for those topics (1–20 topics, limit 1–20) |
 
+Pointing the apps at the local API (debug builds use `http://localhost:8080`):
+
+```bash
+adb reverse tcp:8080 tcp:8080             # Android emulator or device: forward its localhost:8080 to this computer
+```
+
+The iOS simulator shares the Mac's network, so it needs nothing extra.
+
 Configuration comes from environment variables: `PORT`, `DATABASE_URL`, `DATABASE_USER`, `DATABASE_PASSWORD`, `INGESTION_ENABLED`, `INGESTION_INTERVAL_MINUTES`.
 
 iOS:

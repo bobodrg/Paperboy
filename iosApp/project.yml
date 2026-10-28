@@ -25,6 +25,11 @@ targets:
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         UILaunchScreen: {}
+        # Required by Compose Multiplatform to render at 120 Hz on ProMotion screens; it aborts without it.
+        CADisableMinimumFrameDurationOnPhone: true
+        # Lets the simulator reach the API on this Mac over plain HTTP; production uses HTTPS.
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
         UIApplicationSceneManifest:
           UIApplicationSupportsMultipleScenes: false
         UISupportedInterfaceOrientations:
