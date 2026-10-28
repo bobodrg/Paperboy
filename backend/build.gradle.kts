@@ -29,9 +29,28 @@ dependencies {
     implementation(libs.ktor.server.call.logging)
     implementation(libs.ktor.server.status.pages)
     implementation(libs.ktor.serialization.kotlinx.json)
+    implementation(libs.ktor.client.core)
+    implementation(libs.ktor.client.cio)
     implementation(libs.logback.classic)
 
+    implementation(libs.postgresql)
+    implementation(libs.hikari)
+    implementation(libs.flyway.core)
+    implementation(libs.flyway.postgresql)
+
+    implementation(libs.rome)
+    implementation(libs.rome.modules)
+    implementation(libs.jsoup)
+
     testImplementation(libs.kotlin.test)
+    testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.ktor.server.test.host)
     testImplementation(libs.ktor.client.content.negotiation)
+    testImplementation(libs.ktor.client.mock)
+    testImplementation(libs.testcontainers.postgresql)
+}
+
+tasks.test {
+    // Integration tests need Docker. Locally they're skipped when Docker isn't running; CI always has it.
+    systemProperty("paperboy.requireDocker", System.getenv("CI") ?: "false")
 }

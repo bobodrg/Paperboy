@@ -17,7 +17,7 @@ Paperboy is a calm, finite news brief for Android and iOS: open it in the mornin
 
 ## Stack
 
-Kotlin Multiplatform · Compose Multiplatform + Material 3 · MVVM / unidirectional data flow · Koin · Ktor (client and server) · Room · Coroutines + Flow · PostgreSQL
+Kotlin Multiplatform · Compose Multiplatform + Material 3 · MVVM / unidirectional data flow · Koin · Ktor (client and server) · Room · Coroutines + Flow · PostgreSQL + Flyway · Rome (RSS)
 
 ## Getting started
 
@@ -29,6 +29,22 @@ Requirements: JDK 21, Android SDK (API 37), Xcode 26+ for iOS.
 ./gradlew :backend:run                   # API on http://localhost:8080
 ./gradlew ktlintCheck                    # code style
 ```
+
+Backend (needs Docker):
+
+```bash
+docker compose up -d db                   # PostgreSQL on localhost:5432
+./gradlew :backend:run                    # migrates, then ingests the RSS feeds every 15 minutes
+curl 'http://localhost:8080/v1/brief?topics=tech,ai&limit=10'
+```
+
+| Endpoint | What |
+|---|---|
+| `GET /health` | Liveness check |
+| `GET /v1/topics` | Topics a reader can follow |
+| `GET /v1/brief?topics=tech,ai&limit=10` | Today's ranked brief for those topics (1–20 topics, limit 1–20) |
+
+Configuration comes from environment variables: `PORT`, `DATABASE_URL`, `DATABASE_USER`, `DATABASE_PASSWORD`, `INGESTION_ENABLED`, `INGESTION_INTERVAL_MINUTES`.
 
 iOS:
 

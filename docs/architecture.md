@@ -9,7 +9,8 @@ Android / iOS app (Kotlin Multiplatform, Compose Multiplatform)
                                    │ HTTPS / JSON
 Backend (Ktor)
    REST API /v1 ── PostgreSQL
-   Ingestion jobs: RSS feeds → normalise → deduplicate → tag topics → cluster → store
+   Ingestion (every 15 min): RSS feeds → parse → clean URL → deduplicate → tag topic → store
+   Brief: recent stories for the followed topics → rank (topic matches + recency, ≤2 per outlet, every topic covered)
 ```
 
 ## App
@@ -33,7 +34,8 @@ Backend (Ktor)
 
 ## Backend
 
-- Ktor, kotlinx.serialization, PostgreSQL with Flyway migrations.
+- Ktor, kotlinx.serialization, PostgreSQL with Flyway migrations, plain SQL over JDBC (see ADR 0004).
+- The topic and feed catalog lives in `backend/.../catalog/Catalog.kt` and is upserted on startup.
 - Versioned REST API under `/v1`.
 - Stateless container, configured through environment variables, deployed to an EU region.
 
