@@ -3,6 +3,7 @@ package ro.bogdandragomir.paperboy
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -40,7 +41,9 @@ import ro.bogdandragomir.paperboy.data.local.ThemeMode
 import ro.bogdandragomir.paperboy.data.remote.KtorPaperboyApi
 import ro.bogdandragomir.paperboy.data.remote.PaperboyApi
 import ro.bogdandragomir.paperboy.data.remote.createHttpClient
+import ro.bogdandragomir.paperboy.designsystem.LocalReduceMotion
 import ro.bogdandragomir.paperboy.designsystem.PaperboyTheme
+import ro.bogdandragomir.paperboy.designsystem.rememberReduceMotion
 import ro.bogdandragomir.paperboy.navigation.PaperboyNavHost
 import ro.bogdandragomir.paperboy.onboarding.OnboardingRoute
 import ro.bogdandragomir.paperboy.onboarding.OnboardingViewModel
@@ -127,8 +130,10 @@ private fun Root(viewModel: RootViewModel = koinViewModel()) {
             ThemeMode.Light -> false
             ThemeMode.Dark -> true
         }
-    PaperboyTheme(darkTheme = darkTheme) {
-        Surface { RootContent(state) }
+    CompositionLocalProvider(LocalReduceMotion provides rememberReduceMotion()) {
+        PaperboyTheme(darkTheme = darkTheme) {
+            Surface { RootContent(state) }
+        }
     }
 }
 

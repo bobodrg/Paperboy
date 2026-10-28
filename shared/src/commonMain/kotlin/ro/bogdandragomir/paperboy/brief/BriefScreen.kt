@@ -15,13 +15,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -31,7 +31,11 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.koin.compose.viewmodel.koinViewModel
 import ro.bogdandragomir.paperboy.core.model.Story
+import ro.bogdandragomir.paperboy.designsystem.NewspaperRefreshIndicator
+import ro.bogdandragomir.paperboy.designsystem.SkeletonStoryCard
 import ro.bogdandragomir.paperboy.designsystem.StoryCard
+import ro.bogdandragomir.paperboy.designsystem.TossedNewspaper
+import ro.bogdandragomir.paperboy.designsystem.dealIn
 import ro.bogdandragomir.paperboy.designsystem.formatAge
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
@@ -61,6 +65,7 @@ fun BriefScreen(
     onOpenStory: (storyId: String) -> Unit,
     onToggleSave: (Story) -> Unit,
 ) {
+    val pullState = rememberPullToRefreshState()
     Box(
         modifier =
             Modifier
@@ -70,10 +75,21 @@ fun BriefScreen(
                 ),
     ) {
         when (uiState) {
-            BriefUiState.Loading -> CircularProgressIndicator(Modifier.align(Alignment.Center))
+            BriefUiState.Loading -> SkeletonBrief()
             BriefUiState.Error -> ErrorState(onRetry = onRefresh, modifier = Modifier.align(Alignment.Center))
             is BriefUiState.Ready ->
-                PullToRefreshBox(isRefreshing = uiState.isRefreshing, onRefresh = onRefresh) {
+                PullToRefreshBox(
+                    isRefreshing = uiState.isRefreshing,
+                    onRefresh = onRefresh,
+                    state = pullState,
+                    indicator = {
+                        NewspaperRefreshIndicator(
+                            state = pullState,
+                            isRefreshing = uiState.isRefreshing,
+                            modifier = Modifier.align(Alignment.TopCenter),
+                        )
+                    },
+                ) {
                     BriefList(uiState, savedIds, onOpenStory, onToggleSave)
                 }
         }
@@ -107,8 +123,9 @@ private fun BriefList(
             }
             Spacer(Modifier.height(8.dp))
         }
-        items(state.stories, key = { it.id }) { story ->
+        itemsIndexed(state.stories, key = { _, story -> story.id }) { index, story ->
             StoryCard(
+                modifier = Modifier.dealIn(index),
                 story = story,
                 nowEpochMillis = now,
                 isSaved = story.id in savedIds,
@@ -126,6 +143,8 @@ private fun CaughtUp() {
         modifier = Modifier.fillMaxWidth().padding(vertical = 32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
+        TossedNewspaper()
+        Spacer(Modifier.height(16.dp))
         Text("You're all caught up", style = MaterialTheme.typography.titleLarge)
         Text(
             text = "See you tomorrow morning.",
@@ -157,5 +176,17 @@ private fun ErrorState(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Button(onClick = onRetry) { Text("Try again") }
+    }
+}
+
+@Composable
+private fun SkeletonBrief() {
+    Column(
+        Modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 24.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        Text("Paperboy", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+        Text("Your morning edition", style = MaterialTheme.typography.displaySmall)
+        repeat(2) { SkeletonStoryCard() }
     }
 }

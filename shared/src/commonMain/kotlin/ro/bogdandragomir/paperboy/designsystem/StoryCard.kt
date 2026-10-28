@@ -40,7 +40,7 @@ fun StoryCard(
                 containerColor = MaterialTheme.colorScheme.surfaceVariant,
                 contentColor = MaterialTheme.colorScheme.onSurface,
             ),
-        modifier = modifier.fillMaxWidth().clickable(onClick = onClick),
+        modifier = modifier.storyBounds(story.id).fillMaxWidth().clickable(onClick = onClick),
     ) {
         if (showImage && story.imageUrl != null) {
             AsyncImage(

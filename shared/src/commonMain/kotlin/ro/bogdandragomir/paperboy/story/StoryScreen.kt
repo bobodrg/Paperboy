@@ -3,6 +3,7 @@ package ro.bogdandragomir.paperboy.story
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -44,6 +45,7 @@ import org.koin.core.parameter.parametersOf
 import ro.bogdandragomir.paperboy.core.model.Story
 import ro.bogdandragomir.paperboy.designsystem.PaperboyIcons
 import ro.bogdandragomir.paperboy.designsystem.SaveButton
+import ro.bogdandragomir.paperboy.designsystem.storyBounds
 import ro.bogdandragomir.paperboy.designsystem.storyByline
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
@@ -57,6 +59,7 @@ fun StoryRoute(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     StoryScreen(
+        modifier = Modifier.storyBounds(storyId),
         uiState = uiState,
         onBack = onBack,
         onToggleSave = viewModel::toggleSave,
@@ -72,11 +75,13 @@ fun StoryScreen(
     onToggleSave: () -> Unit,
     onShare: (Story) -> Unit,
     onOpenInBrowser: (url: String) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     var progress by remember { mutableFloatStateOf(0f) }
     Column(
-        Modifier
+        modifier
             .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
             .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal)),
     ) {
         ArticleBar(uiState, onBack, onToggleSave, onShare)
