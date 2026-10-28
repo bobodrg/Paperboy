@@ -4,20 +4,25 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import ro.bogdandragomir.paperboy.core.model.Brief
 import ro.bogdandragomir.paperboy.core.model.Source
 import ro.bogdandragomir.paperboy.core.model.Story
+import ro.bogdandragomir.paperboy.core.model.Topic
 import ro.bogdandragomir.paperboy.data.local.BriefLocalDataSource
 import ro.bogdandragomir.paperboy.data.local.CachedBrief
-import ro.bogdandragomir.paperboy.data.remote.BriefApi
+import ro.bogdandragomir.paperboy.data.local.InterestsRepository
+import ro.bogdandragomir.paperboy.data.remote.PaperboyApi
 
-class FakeBriefApi(
-    var response: () -> Brief,
-) : BriefApi {
-    val requests = mutableListOf<Pair<List<String>, Int>>()
+class FakePaperboyApi(
+    var topics: () -> List<Topic> = { emptyList() },
+    var response: () -> Brief = { Brief("2026-10-28", emptyList()) },
+) : PaperboyApi {
+    val briefRequests = mutableListOf<Pair<List<String>, Int>>()
+
+    override suspend fun topics() = topics.invoke()
 
     override suspend fun brief(
         topicIds: List<String>,
         limit: Int,
     ): Brief {
-        requests += topicIds to limit
+        briefRequests += topicIds to limit
         return response()
     }
 }
@@ -34,6 +39,16 @@ class FakeBriefLocalDataSource(
         fetchedAtEpochMillis: Long,
     ) {
         stored.value = CachedBrief(brief, fetchedAtEpochMillis)
+    }
+}
+
+class FakeInterestsRepository(
+    initial: Set<String>? = null,
+) : InterestsRepository {
+    override val followedTopicIds = MutableStateFlow(initial)
+
+    override suspend fun setFollowedTopics(ids: Set<String>) {
+        followedTopicIds.value = ids
     }
 }
 

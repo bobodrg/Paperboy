@@ -9,23 +9,28 @@ import io.ktor.client.request.parameter
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 import ro.bogdandragomir.paperboy.core.model.Brief
+import ro.bogdandragomir.paperboy.core.model.Topic
 
 /** Where the Paperboy API lives. Each platform provides it, see `platformModule`. */
 data class ApiConfig(
     val baseUrl: String,
 )
 
-interface BriefApi {
+interface PaperboyApi {
+    suspend fun topics(): List<Topic>
+
     suspend fun brief(
         topicIds: List<String>,
         limit: Int,
     ): Brief
 }
 
-class KtorBriefApi(
+class KtorPaperboyApi(
     private val client: HttpClient,
     private val config: ApiConfig,
-) : BriefApi {
+) : PaperboyApi {
+    override suspend fun topics(): List<Topic> = client.get("${config.baseUrl}/v1/topics").body()
+
     override suspend fun brief(
         topicIds: List<String>,
         limit: Int,
