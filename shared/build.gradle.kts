@@ -50,9 +50,11 @@ kotlin {
             implementation(libs.coil.network.ktor3)
             implementation(libs.kermit)
             implementation(libs.datastore.preferences.core)
+            implementation(libs.navigation.compose)
         }
         androidMain.dependencies {
             implementation(libs.ktor.client.okhttp)
+            implementation(libs.androidx.browser)
         }
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)
