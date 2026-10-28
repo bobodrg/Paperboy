@@ -15,7 +15,18 @@ import ro.bogdandragomir.paperboy.data.remote.PaperboyApi
 class FakePaperboyApi(
     var topics: () -> List<Topic> = { emptyList() },
     var response: () -> Brief = { Brief("2026-10-28", emptyList()) },
+    var searchResults: (String) -> List<Story> = { emptyList() },
 ) : PaperboyApi {
+    val searches = mutableListOf<String>()
+
+    override suspend fun search(
+        query: String,
+        limit: Int,
+    ): List<Story> {
+        searches += query
+        return searchResults(query)
+    }
+
     val briefRequests = mutableListOf<Pair<List<String>, Int>>()
 
     override suspend fun topics() = topics.invoke()

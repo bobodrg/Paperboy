@@ -1,7 +1,5 @@
 package ro.bogdandragomir.paperboy.navigation
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -12,10 +10,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -31,6 +27,7 @@ import ro.bogdandragomir.paperboy.designsystem.PaperboyIcons
 import ro.bogdandragomir.paperboy.onboarding.OnboardingRoute
 import ro.bogdandragomir.paperboy.profile.ProfileRoute
 import ro.bogdandragomir.paperboy.saved.SavedRoute
+import ro.bogdandragomir.paperboy.search.SearchRoute
 import ro.bogdandragomir.paperboy.story.StoryRoute
 import kotlin.reflect.KClass
 
@@ -105,7 +102,11 @@ fun PaperboyNavHost() {
             composable<TodayDestination> {
                 BriefRoute(onOpenStory = { navController.navigate(StoryDestination(it)) })
             }
-            composable<SearchDestination> { ComingSoon("Search") }
+            composable<SearchDestination> {
+                SearchRoute(
+                    onOpenStory = { navController.navigate(StoryDestination(it)) },
+                )
+            }
             composable<SavedDestination> { SavedRoute(onOpenStory = { navController.navigate(StoryDestination(it)) }) }
             composable<ProfileDestination> {
                 ProfileRoute(
@@ -132,12 +133,5 @@ private fun NavHostController.navigateToTab(route: Any) {
         popUpTo(graph.findStartDestination().id) { saveState = true }
         launchSingleTop = true
         restoreState = true
-    }
-}
-
-@Composable
-private fun ComingSoon(title: String) {
-    Box(Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
-        Text("$title is on its way.", style = MaterialTheme.typography.titleLarge)
     }
 }

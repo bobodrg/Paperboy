@@ -27,9 +27,11 @@ import ro.bogdandragomir.paperboy.brief.BriefViewModel
 import ro.bogdandragomir.paperboy.brief.OfflineFirstBriefRepository
 import ro.bogdandragomir.paperboy.data.local.BriefLocalDataSource
 import ro.bogdandragomir.paperboy.data.local.DataStoreInterestsRepository
+import ro.bogdandragomir.paperboy.data.local.DataStoreRecentSearchesRepository
 import ro.bogdandragomir.paperboy.data.local.DataStoreSettingsRepository
 import ro.bogdandragomir.paperboy.data.local.InterestsRepository
 import ro.bogdandragomir.paperboy.data.local.PaperboyDatabase
+import ro.bogdandragomir.paperboy.data.local.RecentSearchesRepository
 import ro.bogdandragomir.paperboy.data.local.RoomBriefLocalDataSource
 import ro.bogdandragomir.paperboy.data.local.RoomSavedRepository
 import ro.bogdandragomir.paperboy.data.local.SavedRepository
@@ -44,6 +46,7 @@ import ro.bogdandragomir.paperboy.onboarding.OnboardingRoute
 import ro.bogdandragomir.paperboy.onboarding.OnboardingViewModel
 import ro.bogdandragomir.paperboy.profile.ProfileViewModel
 import ro.bogdandragomir.paperboy.saved.SavedViewModel
+import ro.bogdandragomir.paperboy.search.SearchViewModel
 import ro.bogdandragomir.paperboy.story.RecentStories
 import ro.bogdandragomir.paperboy.story.StoryLookup
 import ro.bogdandragomir.paperboy.story.StoryViewModel
@@ -74,6 +77,8 @@ val appModule =
         viewModelOf(::SavedViewModel)
         single<SettingsRepository> { DataStoreSettingsRepository(get()) }
         viewModelOf(::ProfileViewModel)
+        single<RecentSearchesRepository> { DataStoreRecentSearchesRepository(get()) }
+        viewModelOf(::SearchViewModel)
         viewModel { (storyId: String) -> StoryViewModel(storyId, get(), get()) }
     }
 
