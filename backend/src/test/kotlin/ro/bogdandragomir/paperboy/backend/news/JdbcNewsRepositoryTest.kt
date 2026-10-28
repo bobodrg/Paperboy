@@ -79,6 +79,65 @@ class JdbcNewsRepositoryTest {
         }
     }
 
+    @Test
+    fun searchMatchesWordsPrefixesSourcesAndTopics() {
+        if (!dockerAvailable()) return
+
+        PostgreSQLContainer("postgres:18-alpine").use { db ->
+            db.start()
+            createDataSource(db.jdbcUrl, db.username, db.password).use { dataSource ->
+                migrate(dataSource)
+                val repository = JdbcNewsRepository(dataSource)
+                repository.upsertCatalog(
+                    topics = listOf(Topic("tech", "Tech"), Topic("sport", "Sport")),
+                    sources =
+                        listOf(
+                            Source("verge", "The Verge", "https://theverge.com"),
+                            Source("bbc", "BBC", "https://bbc.com"),
+                        ),
+                    feeds = emptyList(),
+                )
+                repository.saveArticles(
+                    "verge",
+                    "tech",
+                    listOf(
+                        ParsedArticle(
+                            "https://v.com/1",
+                            "Apple unveils new headset",
+                            "Vision Pro successor",
+                            null,
+                            now,
+                        ),
+                        ParsedArticle("https://v.com/2", "Chip shortage eases", "Apple and others benefit", null, now),
+                    ),
+                )
+                repository.saveArticles(
+                    "bbc",
+                    "sport",
+                    listOf(ParsedArticle("https://b.com/1", "Football final tonight", "Big match", null, now)),
+                )
+
+                // Headline matches rank above summary matches.
+                assertEquals(
+                    listOf("Apple unveils new headset", "Chip shortage eases"),
+                    repository.search("apple", emptySet(), 10).map { it.headline },
+                )
+                // The last word may be unfinished while typing.
+                assertEquals(
+                    listOf("Football final tonight"),
+                    repository.search("footb", emptySet(), 10).map { it.headline },
+                )
+                // Source and topic names match too.
+                assertEquals(1, repository.search("bbc", emptySet(), 10).size)
+                assertEquals(2, repository.search("tech", emptySet(), 10).size)
+                // Topic filter.
+                assertEquals(emptyList(), repository.search("apple", setOf("sport"), 10))
+                // Punctuation can't break the query.
+                assertEquals(emptyList(), repository.search("'); DROP TABLE articles; --", emptySet(), 10))
+            }
+        }
+    }
+
     private fun dockerAvailable(): Boolean {
         val available = runCatching { DockerClientFactory.instance().isDockerAvailable }.getOrDefault(false)
         check(available || System.getProperty("paperboy.requireDocker") != "true") { "Docker is required in CI" }
