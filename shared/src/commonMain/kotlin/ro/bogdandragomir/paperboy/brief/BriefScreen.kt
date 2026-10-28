@@ -31,7 +31,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -45,10 +44,11 @@ import kotlin.time.ExperimentalTime
 @Composable
 fun BriefRoute(
     onEditTopics: () -> Unit,
+    onOpenStory: (storyId: String) -> Unit,
     viewModel: BriefViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    BriefScreen(uiState, onRefresh = viewModel::refresh, onEditTopics = onEditTopics)
+    BriefScreen(uiState, onRefresh = viewModel::refresh, onEditTopics = onEditTopics, onOpenStory = onOpenStory)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -57,6 +57,7 @@ fun BriefScreen(
     uiState: BriefUiState,
     onRefresh: () -> Unit,
     onEditTopics: () -> Unit,
+    onOpenStory: (storyId: String) -> Unit,
 ) {
     Box(
         modifier =
@@ -69,7 +70,7 @@ fun BriefScreen(
             BriefUiState.Error -> ErrorState(onRetry = onRefresh, modifier = Modifier.align(Alignment.Center))
             is BriefUiState.Ready ->
                 PullToRefreshBox(isRefreshing = uiState.isRefreshing, onRefresh = onRefresh) {
-                    BriefList(uiState, onEditTopics)
+                    BriefList(uiState, onEditTopics, onOpenStory)
                 }
         }
     }
@@ -80,6 +81,7 @@ fun BriefScreen(
 private fun BriefList(
     state: BriefUiState.Ready,
     onEditTopics: () -> Unit,
+    onOpenStory: (storyId: String) -> Unit,
 ) {
     val now = Clock.System.now().toEpochMilliseconds()
     LazyColumn(
@@ -108,7 +110,7 @@ private fun BriefList(
             }
             Spacer(Modifier.height(8.dp))
         }
-        items(state.stories, key = { it.id }) { StoryCard(it, now) }
+        items(state.stories, key = { it.id }) { StoryCard(it, now, onClick = { onOpenStory(it.id) }) }
         item { CaughtUp() }
     }
 }
@@ -117,8 +119,8 @@ private fun BriefList(
 private fun StoryCard(
     story: Story,
     nowEpochMillis: Long,
+    onClick: () -> Unit,
 ) {
-    val uriHandler = LocalUriHandler.current
     Card(
         colors =
             CardDefaults.cardColors(
@@ -128,7 +130,7 @@ private fun StoryCard(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .clickable { uriHandler.openUri(story.url) },
+                .clickable(onClick = onClick),
     ) {
         if (story.imageUrl != null) {
             AsyncImage(
