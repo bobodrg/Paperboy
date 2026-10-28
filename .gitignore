@@ -37,3 +37,4 @@ secrets.properties
 
 # macOS
 .DS_Store
+iosApp/iosApp/Info.plist
