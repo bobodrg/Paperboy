@@ -1,4 +1,4 @@
-package ro.bogdandragomir.paperboy.brief
+package ro.bogdandragomir.paperboy.designsystem
 
 import kotlin.test.Test
 import kotlin.test.assertEquals

@@ -30,5 +30,15 @@ interface NewsRepository {
         limit: Int,
     ): List<Story>
 
+    /**
+     * Stories matching [query] in their headline or summary (prefix match on the last word, so it works while
+     * typing), or whose source or topic name contains it. Best matches first, then newest.
+     */
+    fun search(
+        query: String,
+        topicIds: Set<String>,
+        limit: Int,
+    ): List<Story>
+
     fun deleteArticlesPublishedBefore(cutoff: Instant): Int
 }

@@ -70,6 +70,16 @@ class ApplicationTest {
             assertEquals(HttpStatusCode.BadRequest, client.get("/v1/brief?topics=tech&limit=500").status)
         }
 
+    @Test
+    fun searchFindsStoriesAndValidatesTheQuery() =
+        testApp {
+            assertEquals(listOf("1"), client.get("/v1/search?q=tech").body<List<Story>>().map { it.id })
+            assertEquals(emptyList(), client.get("/v1/search?q=tech&topics=sport").body<List<Story>>())
+            assertEquals(HttpStatusCode.BadRequest, client.get("/v1/search?q=").status)
+            assertEquals(HttpStatusCode.BadRequest, client.get("/v1/search?q=" + "x".repeat(101)).status)
+            assertEquals(HttpStatusCode.BadRequest, client.get("/v1/search?q=tech&limit=99").status)
+        }
+
     private fun testApp(block: suspend ApplicationTestBuilder.() -> Unit) =
         testApplication {
             application { module(repository, BriefService(repository) { now }) }

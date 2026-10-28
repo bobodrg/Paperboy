@@ -9,12 +9,24 @@ import ro.bogdandragomir.paperboy.core.model.Topic
 import ro.bogdandragomir.paperboy.data.local.BriefLocalDataSource
 import ro.bogdandragomir.paperboy.data.local.CachedBrief
 import ro.bogdandragomir.paperboy.data.local.InterestsRepository
+import ro.bogdandragomir.paperboy.data.local.SavedRepository
 import ro.bogdandragomir.paperboy.data.remote.PaperboyApi
 
 class FakePaperboyApi(
     var topics: () -> List<Topic> = { emptyList() },
     var response: () -> Brief = { Brief("2026-10-28", emptyList()) },
+    var searchResults: (String) -> List<Story> = { emptyList() },
 ) : PaperboyApi {
+    val searches = mutableListOf<String>()
+
+    override suspend fun search(
+        query: String,
+        limit: Int,
+    ): List<Story> {
+        searches += query
+        return searchResults(query)
+    }
+
     val briefRequests = mutableListOf<Pair<List<String>, Int>>()
 
     override suspend fun topics() = topics.invoke()
@@ -65,3 +77,21 @@ fun story(id: String) =
         topicIds = listOf("tech"),
         publishedAtEpochMillis = 0,
     )
+
+class FakeSavedRepository : SavedRepository {
+    val saved = MutableStateFlow<List<Story>>(emptyList())
+
+    override fun observeSaved() = saved
+
+    override fun observeSavedIds() = saved.map { list -> list.mapTo(mutableSetOf()) { it.id } }
+
+    override fun observeStory(id: String) = saved.map { list -> list.find { it.id == id } }
+
+    override suspend fun save(story: Story) {
+        saved.value = listOf(story) + saved.value.filterNot { it.id == story.id }
+    }
+
+    override suspend fun remove(storyId: String) {
+        saved.value = saved.value.filterNot { it.id == storyId }
+    }
+}

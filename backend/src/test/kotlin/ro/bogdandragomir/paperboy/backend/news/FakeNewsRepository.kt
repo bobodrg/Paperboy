@@ -45,5 +45,15 @@ class FakeNewsRepository(
             .take(limit)
     }
 
+    override fun search(
+        query: String,
+        topicIds: Set<String>,
+        limit: Int,
+    ): List<Story> =
+        stories
+            .filter { it.headline.contains(query, ignoreCase = true) }
+            .filter { topicIds.isEmpty() || it.topicIds.any(topicIds::contains) }
+            .take(limit)
+
     override fun deleteArticlesPublishedBefore(cutoff: Instant) = 0
 }

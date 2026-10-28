@@ -6,6 +6,7 @@ import ro.bogdandragomir.paperboy.core.model.Source
 import ro.bogdandragomir.paperboy.core.model.Story
 import ro.bogdandragomir.paperboy.core.model.Topic
 import java.sql.Connection
+import java.sql.ResultSet
 import java.sql.Timestamp
 import java.time.Instant
 import javax.sql.DataSource
@@ -146,28 +147,56 @@ class JdbcNewsRepository(
                     statement.setTimestamp(1, Timestamp.from(since))
                     statement.setArray(2, connection.createArrayOf("text", topicIds.toTypedArray()))
                     statement.setInt(3, limit)
-                    statement.executeQuery().use { rows ->
-                        buildList {
-                            while (rows.next()) {
-                                @Suppress("UNCHECKED_CAST")
-                                val topics = (rows.getArray(10).array as Array<String>).toList()
-                                add(
-                                    Story(
-                                        id = rows.getLong(1).toString(),
-                                        url = rows.getString(2),
-                                        headline = rows.getString(3),
-                                        summary = rows.getString(4),
-                                        imageUrl = rows.getString(5),
-                                        publishedAtEpochMillis = rows.getTimestamp(6).time,
-                                        source = Source(rows.getString(7), rows.getString(8), rows.getString(9)),
-                                        topicIds = topics,
-                                    ),
-                                )
-                            }
-                        }
-                    }
+                    statement.executeQuery().use { rows -> buildList { while (rows.next()) add(rows.toStory()) } }
                 }
         }
+
+    override fun search(
+        query: String,
+        topicIds: Set<String>,
+        limit: Int,
+    ): List<Story> {
+        val tsQuery = SearchQuery.toTsQuery(query) ?: return emptyList()
+        val like = "%${SearchQuery.escapeLike(query.trim())}%"
+        return transaction { connection ->
+            connection
+                .prepareStatement(
+                    """
+                    WITH q AS (SELECT to_tsquery('english', ?) AS query)
+                    SELECT a.id, a.url, a.title, a.summary, a.image_url, a.published_at,
+                           s.id, s.name, s.homepage_url,
+                           array_agg(t.topic_id ORDER BY t.topic_id),
+                           ts_rank(a.search, q.query) AS rank
+                    FROM articles a
+                    CROSS JOIN q
+                    JOIN sources s ON s.id = a.source_id
+                    JOIN article_topics t ON t.article_id = a.id
+                    WHERE (
+                        a.search @@ q.query
+                        OR s.name ILIKE ?
+                        OR a.id IN (
+                            SELECT at.article_id FROM article_topics at JOIN topics tp ON tp.id = at.topic_id
+                            WHERE tp.name ILIKE ?
+                        )
+                    )
+                    AND (cardinality(?::text[]) = 0
+                         OR a.id IN (SELECT article_id FROM article_topics WHERE topic_id = ANY (?)))
+                    GROUP BY a.id, s.id, q.query
+                    ORDER BY rank DESC, a.published_at DESC
+                    LIMIT ?
+                    """.trimIndent(),
+                ).use { statement ->
+                    val topics = connection.createArrayOf("text", topicIds.toTypedArray())
+                    statement.setString(1, tsQuery)
+                    statement.setString(2, like)
+                    statement.setString(3, like)
+                    statement.setArray(4, topics)
+                    statement.setArray(5, topics)
+                    statement.setInt(6, limit)
+                    statement.executeQuery().use { rows -> buildList { while (rows.next()) add(rows.toStory()) } }
+                }
+        }
+    }
 
     override fun deleteArticlesPublishedBefore(cutoff: Instant): Int =
         transaction { connection ->
@@ -176,6 +205,22 @@ class JdbcNewsRepository(
                 statement.executeUpdate()
             }
         }
+
+    /** Maps the first ten columns shared by the brief and search queries. */
+    private fun ResultSet.toStory(): Story {
+        @Suppress("UNCHECKED_CAST")
+        val topics = (getArray(10).array as Array<String>).toList()
+        return Story(
+            id = getLong(1).toString(),
+            url = getString(2),
+            headline = getString(3),
+            summary = getString(4),
+            imageUrl = getString(5),
+            publishedAtEpochMillis = getTimestamp(6).time,
+            source = Source(getString(7), getString(8), getString(9)),
+            topicIds = topics,
+        )
+    }
 
     private fun <T> transaction(block: (Connection) -> T): T =
         dataSource.connection.use { connection ->

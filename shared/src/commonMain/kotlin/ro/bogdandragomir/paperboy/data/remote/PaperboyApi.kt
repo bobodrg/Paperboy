@@ -9,6 +9,7 @@ import io.ktor.client.request.parameter
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 import ro.bogdandragomir.paperboy.core.model.Brief
+import ro.bogdandragomir.paperboy.core.model.Story
 import ro.bogdandragomir.paperboy.core.model.Topic
 
 /** Where the Paperboy API lives. Each platform provides it, see `platformModule`. */
@@ -23,6 +24,11 @@ interface PaperboyApi {
         topicIds: List<String>,
         limit: Int,
     ): Brief
+
+    suspend fun search(
+        query: String,
+        limit: Int,
+    ): List<Story>
 }
 
 class KtorPaperboyApi(
@@ -38,6 +44,16 @@ class KtorPaperboyApi(
         client
             .get("${config.baseUrl}/v1/brief") {
                 parameter("topics", topicIds.joinToString(","))
+                parameter("limit", limit)
+            }.body()
+
+    override suspend fun search(
+        query: String,
+        limit: Int,
+    ): List<Story> =
+        client
+            .get("${config.baseUrl}/v1/search") {
+                parameter("q", query)
                 parameter("limit", limit)
             }.body()
 }

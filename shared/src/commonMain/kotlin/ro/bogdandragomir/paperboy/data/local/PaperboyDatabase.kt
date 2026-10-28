@@ -1,5 +1,6 @@
 package ro.bogdandragomir.paperboy.data.local
 
+import androidx.room.AutoMigration
 import androidx.room.ConstructedBy
 import androidx.room.Dao
 import androidx.room.Database
@@ -74,10 +75,20 @@ abstract class BriefDao {
     }
 }
 
-@Database(entities = [StoryEntity::class, BriefMetaEntity::class], version = 1)
+/**
+ * Version history (schemas are exported to shared/schemas and checked in):
+ * 1: the cached brief. 2: saved stories.
+ */
+@Database(
+    entities = [StoryEntity::class, BriefMetaEntity::class, SavedStoryEntity::class],
+    version = 2,
+    autoMigrations = [AutoMigration(from = 1, to = 2)],
+)
 @ConstructedBy(PaperboyDatabaseConstructor::class)
 abstract class PaperboyDatabase : RoomDatabase() {
     abstract fun briefDao(): BriefDao
+
+    abstract fun savedStoryDao(): SavedStoryDao
 }
 
 // Room's compiler generates the actual implementations.
@@ -87,11 +98,11 @@ expect object PaperboyDatabaseConstructor : RoomDatabaseConstructor<PaperboyData
 }
 
 /**
- * Finishes a platform's database builder. The database is only a cache of server data,
- * so a schema change may simply drop it and download the brief again.
+ * Finishes a platform's database builder. Saved stories are the reader's own data, so every schema
+ * change needs a migration; only a downgrade (installing an older build) may wipe the database.
  */
 fun RoomDatabase.Builder<PaperboyDatabase>.buildPaperboyDatabase(): PaperboyDatabase =
     setDriver(BundledSQLiteDriver())
         .setQueryCoroutineContext(Dispatchers.IO)
-        .fallbackToDestructiveMigration(dropAllTables = true)
+        .fallbackToDestructiveMigrationOnDowngrade(dropAllTables = true)
         .build()

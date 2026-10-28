@@ -21,8 +21,8 @@ actual fun rememberArticleBrowser(): (url: String) -> Unit =
         }
     }
 
-/** The view controller currently on screen, so the browser opens above whatever is showing. */
-private fun topViewController(): UIViewController? {
+/** The view controller currently on screen, so sheets open above whatever is showing. */
+internal fun topViewController(): UIViewController? {
     val window =
         UIApplication.sharedApplication.connectedScenes
             .filterIsInstance<UIWindowScene>()

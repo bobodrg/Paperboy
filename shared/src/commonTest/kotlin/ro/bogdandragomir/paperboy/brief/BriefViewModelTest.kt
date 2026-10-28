@@ -26,7 +26,7 @@ class BriefViewModelTest {
         api: FakePaperboyApi,
         local: FakeBriefLocalDataSource,
         interests: FakeInterestsRepository = FakeInterestsRepository(setOf("tech")),
-    ) = BriefViewModel(OfflineFirstBriefRepository(api, local, interests) { 100 }, interests)
+    ) = BriefViewModel(OfflineFirstBriefRepository(api, local, interests) { 100 }, interests, FakeSavedRepository())
 
     private fun ready(
         vararg ids: String,
@@ -91,5 +91,32 @@ class BriefViewModelTest {
             }
 
             assertEquals(listOf(listOf("tech"), listOf("sport", "tech", "world")), api.briefRequests.map { it.first })
+        }
+
+    @Test
+    fun savingAStoryMarksItAsSaved() =
+        runTest {
+            val saved = FakeSavedRepository()
+            val interests = FakeInterestsRepository(setOf("tech"))
+            val vm =
+                BriefViewModel(
+                    OfflineFirstBriefRepository(
+                        FakePaperboyApi(response = {
+                            briefOf("1")
+                        }),
+                        FakeBriefLocalDataSource(),
+                        interests,
+                    ) { 100 },
+                    interests,
+                    saved,
+                )
+
+            vm.savedIds.test {
+                assertEquals(emptySet(), awaitItem())
+                vm.toggleSave(story("1"))
+                assertEquals(setOf("1"), awaitItem())
+                vm.toggleSave(story("1"))
+                assertEquals(emptySet(), awaitItem())
+            }
         }
 }
