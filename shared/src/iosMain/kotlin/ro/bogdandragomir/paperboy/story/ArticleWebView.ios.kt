@@ -39,11 +39,13 @@ actual fun ArticleWebView(
         webView.navigationDelegate = delegate
         NSURL.URLWithString(url)?.let { webView.loadRequest(NSURLRequest(uRL = it)) }
         // WKWebView reports progress through key-value observing; polling it is simpler and cheap.
-        while (true) {
+        // Some pages keep loading trackers and never report 100%, so "stopped loading" also means done.
+        delay(PROGRESS_POLL_MILLIS)
+        while (webView.loading) {
             onProgress(webView.estimatedProgress.toFloat())
-            if (!webView.loading && webView.estimatedProgress >= 1.0) break
             delay(PROGRESS_POLL_MILLIS)
         }
+        onProgress(1f)
     }
 
     UIKitView(factory = { webView }, modifier = modifier)

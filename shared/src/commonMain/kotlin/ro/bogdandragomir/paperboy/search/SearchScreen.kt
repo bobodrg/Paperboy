@@ -33,6 +33,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -76,6 +77,7 @@ fun SearchScreen(
     onOpenStory: (storyId: String) -> Unit,
 ) {
     val now = Clock.System.now().toEpochMilliseconds()
+    val keyboard = LocalSoftwareKeyboardController.current
     Column(
         Modifier
             .fillMaxSize()
@@ -98,7 +100,13 @@ fun SearchScreen(
                 singleLine = true,
                 shape = RoundedCornerShape(28.dp),
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                keyboardActions = KeyboardActions(onSearch = { onSubmit() }),
+                keyboardActions =
+                    KeyboardActions(
+                        onSearch = {
+                            keyboard?.hide()
+                            onSubmit()
+                        },
+                    ),
                 colors =
                     OutlinedTextFieldDefaults.colors(
                         unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,

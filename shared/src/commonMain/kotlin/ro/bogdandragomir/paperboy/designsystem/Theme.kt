@@ -24,6 +24,14 @@ private val NightInk = Color(0xFFEDE8DF)
 private val NightInkSoft = Color(0xFFA8A29A)
 private val NightStamp = Color(0xFFFB923C)
 
+// Tints for selected chips, progress tracks and other "secondary" surfaces (Material defaults to purple).
+private val StampWash = Color(0xFFF6E3D8)
+private val StampDeep = Color(0xFF7A2A08)
+private val NightStampWash = Color(0xFF3A2A20)
+private val NightStampLight = Color(0xFFFFD7BF)
+private val Rule = Color(0xFFDDD6CB)
+private val NightRule = Color(0xFF3A3733)
+
 private val LightColors =
     lightColorScheme(
         primary = Stamp,
@@ -34,6 +42,17 @@ private val LightColors =
         onSurface = Ink,
         surfaceVariant = PaperDim,
         onSurfaceVariant = InkSoft,
+        secondary = Stamp,
+        onSecondary = Paper,
+        secondaryContainer = StampWash,
+        onSecondaryContainer = StampDeep,
+        primaryContainer = StampWash,
+        onPrimaryContainer = StampDeep,
+        surfaceContainer = PaperDim,
+        surfaceContainerHigh = PaperDim,
+        surfaceContainerHighest = PaperDim,
+        outline = InkSoft,
+        outlineVariant = Rule,
     )
 
 private val DarkColors =
@@ -46,6 +65,17 @@ private val DarkColors =
         onSurface = NightInk,
         surfaceVariant = NightCard,
         onSurfaceVariant = NightInkSoft,
+        secondary = NightStamp,
+        onSecondary = NightPaper,
+        secondaryContainer = NightStampWash,
+        onSecondaryContainer = NightStampLight,
+        primaryContainer = NightStampWash,
+        onPrimaryContainer = NightStampLight,
+        surfaceContainer = NightCard,
+        surfaceContainerHigh = NightCard,
+        surfaceContainerHighest = NightCard,
+        outline = NightInkSoft,
+        outlineVariant = NightRule,
     )
 
 private val Headline = FontFamily.Serif
