@@ -3,16 +3,12 @@ package ro.bogdandragomir.paperboy.brief
 import app.cash.turbine.test
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import ro.bogdandragomir.paperboy.core.model.Brief
-import ro.bogdandragomir.paperboy.core.model.Source
-import ro.bogdandragomir.paperboy.core.model.Story
+import ro.bogdandragomir.paperboy.data.local.CachedBrief
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -26,41 +22,79 @@ class BriefViewModelTest {
     @AfterTest
     fun tearDown() = Dispatchers.resetMain()
 
-    @Test
-    fun emitsReadyWithTheRepositoryStories() =
-        runTest {
-            val story = story("1")
-            val viewModel = BriefViewModel(FakeBriefRepository(flowOf(Brief("2026-10-28", listOf(story)))))
+    private fun viewModel(
+        api: FakeBriefApi,
+        local: FakeBriefLocalDataSource,
+    ) = BriefViewModel(OfflineFirstBriefRepository(api, local, { listOf("tech") }) { 100 })
 
-            viewModel.uiState.test {
-                assertEquals(BriefUiState.Ready(listOf(story)), awaitItem())
+    @Test
+    fun showsTheDownloadedBrief() =
+        runTest {
+            val vm = viewModel(FakeBriefApi { Brief("2026-10-28", listOf(story("1"))) }, FakeBriefLocalDataSource())
+
+            vm.uiState.test {
+                assertEquals(
+                    BriefUiState.Ready(
+                        listOf(story("1")),
+                        fetchedAtEpochMillis = 100,
+                        isRefreshing = false,
+                        isStale = false,
+                    ),
+                    awaitItem(),
+                )
             }
         }
 
     @Test
-    fun emitsErrorWhenTheRepositoryFails() =
+    fun offlineWithAStoredBriefShowsItAsStale() =
         runTest {
-            val viewModel = BriefViewModel(FakeBriefRepository(flow { error("offline") }))
+            val stored = CachedBrief(Brief("2026-10-27", listOf(story("old"))), fetchedAtEpochMillis = 7)
+            val vm = viewModel(FakeBriefApi { error("offline") }, FakeBriefLocalDataSource(stored))
 
-            viewModel.uiState.test {
+            vm.uiState.test {
+                assertEquals(
+                    BriefUiState.Ready(
+                        listOf(story("old")),
+                        fetchedAtEpochMillis = 7,
+                        isRefreshing = false,
+                        isStale = true,
+                    ),
+                    awaitItem(),
+                )
+            }
+        }
+
+    @Test
+    fun offlineWithNothingStoredShowsTheErrorState() =
+        runTest {
+            val vm = viewModel(FakeBriefApi { error("offline") }, FakeBriefLocalDataSource())
+
+            vm.uiState.test {
                 assertEquals(BriefUiState.Error, awaitItem())
             }
         }
 
-    private class FakeBriefRepository(
-        private val brief: Flow<Brief>,
-    ) : BriefRepository {
-        override fun observeTodayBrief(): Flow<Brief> = brief
-    }
+    @Test
+    fun retryAfterAnErrorShowsTheBrief() =
+        runTest {
+            val api = FakeBriefApi { error("offline") }
+            val vm = viewModel(api, FakeBriefLocalDataSource())
 
-    private fun story(id: String) =
-        Story(
-            id = id,
-            headline = "Headline $id",
-            summary = "Summary",
-            url = "https://example.com/$id",
-            source = Source("src", "Example", "https://example.com"),
-            topicIds = listOf("tech"),
-            publishedAtEpochMillis = 0,
-        )
+            vm.uiState.test {
+                assertEquals(BriefUiState.Error, awaitItem())
+
+                api.response = { Brief("2026-10-28", listOf(story("1"))) }
+                vm.refresh()
+
+                assertEquals(
+                    BriefUiState.Ready(
+                        listOf(story("1")),
+                        fetchedAtEpochMillis = 100,
+                        isRefreshing = false,
+                        isStale = false,
+                    ),
+                    expectMostRecentItem(),
+                )
+            }
+        }
 }
