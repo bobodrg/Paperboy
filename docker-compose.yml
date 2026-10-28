@@ -1,0 +1,20 @@
+# Local development: docker compose up -d db
+# Then run the API with ./gradlew :backend:run
+services:
+  db:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_DB: paperboy
+      POSTGRES_USER: paperboy
+      POSTGRES_PASSWORD: paperboy
+    ports:
+      - "5432:5432"
+    volumes:
+      - paperboy-db:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U paperboy"]
+      interval: 5s
+      retries: 10
+
+volumes:
+  paperboy-db:
