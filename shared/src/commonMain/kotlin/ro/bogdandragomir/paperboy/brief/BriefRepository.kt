@@ -4,6 +4,7 @@ import co.touchlab.kermit.Logger
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import ro.bogdandragomir.paperboy.core.model.Story
 import ro.bogdandragomir.paperboy.data.local.BriefLocalDataSource
 import ro.bogdandragomir.paperboy.data.local.CachedBrief
 import ro.bogdandragomir.paperboy.data.local.InterestsRepository
@@ -12,6 +13,8 @@ import ro.bogdandragomir.paperboy.data.remote.PaperboyApi
 interface BriefRepository {
     /** The brief stored on the device. This is what the UI shows, online or offline. */
     fun observeBrief(): Flow<CachedBrief?>
+
+    fun observeStory(id: String): Flow<Story?>
 
     /** Downloads a fresh brief for the followed topics and stores it. On failure the stored brief stays as it was. */
     suspend fun refresh(): Result<Unit>
@@ -24,6 +27,8 @@ class OfflineFirstBriefRepository(
     private val nowEpochMillis: () -> Long,
 ) : BriefRepository {
     override fun observeBrief(): Flow<CachedBrief?> = local.observe()
+
+    override fun observeStory(id: String): Flow<Story?> = local.observeStory(id)
 
     override suspend fun refresh(): Result<Unit> =
         try {

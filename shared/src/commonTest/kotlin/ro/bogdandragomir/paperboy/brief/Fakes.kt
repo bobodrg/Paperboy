@@ -1,6 +1,7 @@
 package ro.bogdandragomir.paperboy.brief
 
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.map
 import ro.bogdandragomir.paperboy.core.model.Brief
 import ro.bogdandragomir.paperboy.core.model.Source
 import ro.bogdandragomir.paperboy.core.model.Story
@@ -33,6 +34,8 @@ class FakeBriefLocalDataSource(
     val stored = MutableStateFlow(initial)
 
     override fun observe() = stored
+
+    override fun observeStory(id: String) = stored.map { cached -> cached?.brief?.stories?.find { it.id == id } }
 
     override suspend fun replace(
         brief: Brief,
